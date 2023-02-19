@@ -1,54 +1,45 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaSearch } from 'react-icons/fa'
 import circular from './resourses/circular.gif'
 
 export const App = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState([])
+  const [selected, setSelected] = useState(null)
   const [article, setArticle] = useState({ Topic: "", Detail: "" })
-  const [data, setData] = useState(null)
-  const [startFirstQuery, setStartFirstQuery] = useState(false)
+  const [data, setData] = useState()
 
-  const handleSearch = (e) => {
-    const value = e.target.value.trimLeft()
-    setSearchTerm(value)
-
-    if (value === "") {
-      setSearchResults([])
-      console.log("Sin resultados")
-    } else {
-      const URL = `https://serviceone.onrender.com/apiWikiIdeasV1d/getPublication/${value}`
-      const getTopics = async () => {
-        setStartFirstQuery(true)
-        /* Se realiza una petición para traer las coincidencias con la cadena ingresada en el input, el servidor responderá
-        con un array de objetos, los cuales tienen un tópico y el número de docuemnto correspondiente. Si la api responde 
-        con un array vacío significa que no encontró coincidencias*/
-        const response = await fetch(URL)
-        const data = await response.json()
-        setData(data)
-        setSearchResults(data)
-      }
-      getTopics()
-    }
-  }
-  /*función que recibe el item recuperado en la renderización y ejecuta la consulta para traer 
-  la publicación */
-  const handleClick = (item) => {
-    setStartFirstQuery(false)
+  const getTopics = async () => {
     setData(null)
+    const response = await fetch(`http://localhost:5002/apiWikiIdeasV1d/getPublication/${searchTerm}`)
+    const data = await response.json()
+    setSearchResults(data)
+    setData(data)
+  }
+  /* Búsqueda de sugerencias */
+  useEffect(() => {
+    getTopics();
+  }, [searchTerm]);
 
-    const URL = `https://serviceone.onrender.com/apiWikiIdeasV1d/getPublicationbyNumDoc/${item.NumDoc}`
+  /* Trae la publicación seleccionada */
+  const handleClick = async (item) => {
+    setSelected(item)
+    setData(null)
+  }
+  useEffect(() => {
     const getPublication = async () => {
-      const response = await fetch(URL)
-      const data = await response.json()
-      setArticle({ Topic: data[0].Topic, Detail: data[0].Detail })
-      setSearchResults([])
-      setSearchTerm('');
-
+      if (selected) {
+        const response = await fetch(`http://localhost:5002/apiWikiIdeasV1d/getPublicationbyNumDoc/${selected.NumDoc}`)
+        const data = await response.json()
+        setArticle({ Topic: data[0].Topic, Detail: data[0].Detail })
+        setSearchResults([])
+        setSearchTerm('');
+      }
     }
     getPublication()
-  }
-  //Se implementará proximamente, falta el endpoint en el backend
+  }, [selected])
+
+  //Se implementará proximamente, falta el endpoint en el backend.
   const handleSearchButton = () => {
     console.log("Pendiente de implementación", searchTerm)
 
@@ -65,7 +56,7 @@ export const App = () => {
               autoComplete="off"
               placeholder="Buscar..."
               value={searchTerm}
-              onChange={handleSearch}
+              onChange={(e) => setSearchTerm(e.target.value.trimStart())}
             />
             <button onClick={() => handleSearchButton()}>
               <FaSearch />
@@ -80,11 +71,13 @@ export const App = () => {
             top: "-2px"
           }}>
             {
-              /*Se tuvieron que implementar los estados startFirstQuery y data para solucionar un bug que estaba ocurriendo,
-              cuando el server presenta inactividad se suspende, eso hace que la primera consulta que realizamos demore unos cuantos 
-              segundos, fue necesario implementar un circular progress bar para dar feedback al usuario,
-              analizaré cómo mejorar este problema  */
-              (startFirstQuery && !data) ?
+              /*Se tuvo que implementar el state 'data' y circular progress bar; para poder mostrar feedback al usuario durante una latencia que está sucediendo 
+              en la primera llamada que se le realiza el la api luego de un período de actividad. Esto es porque estamos trabajando con un plan free 
+              que es para pruebas.
+              Cuando el server presenta inactividad por cierto tiempo, se suspende para optimizar recursos, eso hace que la primera consulta que realizamos 
+              demore unos cuantos segundos.
+              Analizaré cómo mejorar este problema  */
+              (data === null) ?
                 <div style={{ display: "flex", justifyContent: "center" }}>
                   <img src={circular} alt="circular" style={{ width: "35px", borderRadius: "90px" }} />
                 </div> :
