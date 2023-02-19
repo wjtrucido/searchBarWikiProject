@@ -11,7 +11,7 @@ export const App = () => {
 
   const getTopics = async () => {
     setData(null)
-    const response = await fetch(`http://localhost:5002/apiWikiIdeasV1d/getPublication/${searchTerm}`)
+    const response = await fetch(`https://serviceone.onrender.com/apiWikiIdeasV1d/getPublication/${searchTerm}`)
     const data = await response.json()
     setSearchResults(data)
     setData(data)
@@ -29,7 +29,7 @@ export const App = () => {
   useEffect(() => {
     const getPublication = async () => {
       if (selected) {
-        const response = await fetch(`http://localhost:5002/apiWikiIdeasV1d/getPublicationbyNumDoc/${selected.NumDoc}`)
+        const response = await fetch(`https://serviceone.onrender.com/apiWikiIdeasV1d/getPublicationbyNumDoc/${selected.NumDoc}`)
         const data = await response.json()
         setArticle({ Topic: data[0].Topic, Detail: data[0].Detail })
         setSearchResults([])
