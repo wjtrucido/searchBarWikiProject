@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { FaSearch } from 'react-icons/fa'
-import circular from './resourses/circular.gif'
+import { FaSearch } from 'react-icons/fa';
+import circular from './resourses/circular.gif';
 
 export const App = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [article, setArticle] = useState({ Topic: "", Detail: "" })
-  const [data, setData] = useState()
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [article, setArticle] = useState({ topic: "", detail: null });
+  const [data, setData] = useState();
 
   const getTopics = async () => {
-    setData(null)
-    const response = await fetch(`https://serviceone.onrender.com/apiWikiIdeasV1d/getPublication/${searchTerm}`)
-    const data = await response.json()
-    setSearchResults(data)
-    setData(data)
+    setData(null);
+    const response = await fetch(`https://serviceone.onrender.com/api-wiki-ideas/publications-by-string/${searchTerm}`);
+    const data = await response.json();
+    setSearchResults(data);
+    setData(data);
   }
   /* Búsqueda de sugerencias */
   useEffect(() => {
@@ -23,25 +23,25 @@ export const App = () => {
 
   /* Trae la publicación seleccionada */
   const handleClick = async (item) => {
-    setSelected(item)
-    setData(null)
+    setSelected(item);
+    setData(null);
   }
   useEffect(() => {
     const getPublication = async () => {
       if (selected) {
-        const response = await fetch(`https://serviceone.onrender.com/apiWikiIdeasV1d/getPublicationbyNumDoc/${selected.NumDoc}`)
-        const data = await response.json()
-        setArticle({ Topic: data[0].Topic, Detail: data[0].Detail })
-        setSearchResults([])
+        const response = await fetch(`https://serviceone.onrender.com/api-wiki-ideas/publication-by-number/${selected.numberPublication}`);
+        const data = await response.json();
+        setArticle({ topic: data.publication.topic, detail: data.publication.detail });
+        setSearchResults([]);
         setSearchTerm('');
       }
     }
-    getPublication()
-  }, [selected])
+    getPublication();
+  }, [selected]);
 
   //Se implementará proximamente, falta el endpoint en el backend.
   const handleSearchButton = () => {
-    console.log("Pendiente de implementación", searchTerm)
+    console.log("Pendiente de implementación", searchTerm);
 
   }
   return (
@@ -71,12 +71,6 @@ export const App = () => {
             top: "-2px"
           }}>
             {
-              /*Se tuvo que implementar el state 'data' y circular progress bar; para poder mostrar feedback al usuario durante una latencia que está sucediendo 
-              en la primera llamada que se le realiza el la api luego de un período de actividad. Esto es porque estamos trabajando con un plan free 
-              que es para pruebas.
-              Cuando el server presenta inactividad por cierto tiempo, se suspende para optimizar recursos, eso hace que la primera consulta que realizamos 
-              demore unos cuantos segundos.
-              Analizaré cómo mejorar este problema  */
               (data === null) ?
                 <div style={{ display: "flex", justifyContent: "center" }}>
                   <img src={circular} alt="circular" style={{ width: "35px", borderRadius: "90px" }} />
@@ -86,8 +80,8 @@ export const App = () => {
                     <ul style={{ listStyleType: "none", margin: "3px" }}>
                       {
                         searchResults.map(item => (
-                          <li key={item.NumDoc} onClick={() => { handleClick(item) }} style={{ backgroundColor: "white", margin: "3px", width: "70%", border: "none", textAlign: "left", cursor: "pointer" }}>
-                            {item.Topic}
+                          <li key={item.numberPublication} onClick={() => { handleClick(item) }} style={{ backgroundColor: "white", margin: "3px", width: "70%", border: "none", textAlign: "left", cursor: "pointer" }}>
+                            {item.topic}
                           </li>)
                         )
                       }
@@ -103,10 +97,10 @@ export const App = () => {
           marginTop: "20px",
           marginLeft: "15px",
         }}>
-          <h5>{article.Topic}</h5>
-          {article.Detail}
+          <h5>{article.topic}</h5>
+          {article.detail}
         </div>
       </div>
     </>
-  );
+  )
 }
